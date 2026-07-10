@@ -1,0 +1,9 @@
+__pycache__/
+.vercel/
+.env
+.env.local
+.env.*.local
+work/*.db
+work/*.db-*
+work/generated_data.json
+outputs/backups/

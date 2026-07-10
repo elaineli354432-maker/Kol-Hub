@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brandream KOL Hub</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">B</div>
+          <div>
+            <p class="brand-kicker">Brandream</p>
+            <h1>KOL Hub</h1>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-link active" data-view="dashboard">Dashboard</button>
+          <button class="nav-link" data-view="influencers">达人库</button>
+          <button class="nav-link" data-view="brands">竞品品牌库</button>
+          <button class="nav-link" data-view="reports">汇报导出</button>
+        </nav>
+
+        <section class="sidebar-note">
+          <p class="sidebar-title">当前版本</p>
+          <p>本地可运行原型，数据保存在浏览器本地。</p>
+          <p>新增达人支持根据链接自动识别平台、账号并回填基础资料。</p>
+        </section>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="view-eyebrow">Overview</p>
+            <h2 id="view-title">Dashboard</h2>
+          </div>
+          <div class="topbar-actions">
+            <input id="global-search" class="search-input" type="search" placeholder="搜索达人、品牌、国家、关键词" />
+            <button id="add-brand-trigger" class="ghost-button">新增竞品品牌</button>
+            <button id="add-influencer-trigger" class="primary-button">新增达人</button>
+          </div>
+        </header>
+
+        <section id="dashboard-view" class="view active"></section>
+        <section id="influencers-view" class="view"></section>
+        <section id="brands-view" class="view"></section>
+        <section id="reports-view" class="view"></section>
+      </main>
+    </div>
+
+    <dialog id="influencer-modal" class="modal">
+      <form method="dialog" class="modal-card" id="influencer-form">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow" id="influencer-modal-eyebrow">Add Influencer</p>
+            <h3>新增达人</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit" formnovalidate>×</button>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            平台
+            <select name="platform" required></select>
+          </label>
+          <label class="span-2">
+            达人链接
+            <div class="inline-input">
+              <input name="profileUrl" type="url" required placeholder="https://www.instagram.com/xxxx" />
+              <button type="button" id="autofill-trigger" class="ghost-button small">自动填资料</button>
+            </div>
+          </label>
+          <label>
+            达人账号
+            <input name="accountHandle" type="text" placeholder="@handle" />
+          </label>
+          <label>
+            达人名称
+            <input name="displayName" type="text" placeholder="Creator name" />
+          </label>
+          <label>
+            国家/地区
+            <input name="country" type="text" placeholder="United States" />
+          </label>
+          <label>
+            粉丝数
+            <input name="followerCount" type="number" min="0" step="1" />
+          </label>
+          <label>
+            粉丝级别
+            <select name="followerTier"></select>
+          </label>
+          <label>
+            内容类型
+            <input name="contentType" type="text" placeholder="Home decor / Bedding / Lifestyle" />
+          </label>
+          <label class="span-2">
+            简介/关键词
+            <textarea name="bioKeywords" rows="3" placeholder="Creator bio, topic tags, bedroom style..."></textarea>
+          </label>
+          <label class="span-2">
+            联系方式
+            <input name="contactInfo" type="text" placeholder="Email / DM / Link in bio" />
+          </label>
+          <label>
+            First Contact Channel
+            <input name="firstContactChannel" type="text" placeholder="DM / Email / Messenger" />
+          </label>
+          <label>
+            Quote
+            <input name="quoteAmount" type="text" placeholder="$300 / 1 reel" />
+          </label>
+          <label>
+            Priority
+            <select name="priority"></select>
+          </label>
+          <label>
+            Collaboration Status
+            <select name="status"></select>
+          </label>
+          <label>
+            Contacted
+            <select name="isContacted">
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          </label>
+          <label>
+            Leadership Export
+            <select name="isSelectedForReport">
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          </label>
+          <label class="span-2">
+            Auto Fill Status
+            <input name="autoFillStatus" type="text" placeholder="Imported from Excel / Manual / Auto-filled" />
+          </label>
+          <label class="span-2">
+            匹配理由
+            <textarea name="fitReason" rows="3" placeholder="为什么适合 Brandream"></textarea>
+          </label>
+          <label class="span-2">
+            推荐产品
+            <input name="recommendedProducts" type="text" placeholder="Floral duvet cover / Quilt / Twin XL bedding" />
+          </label>
+          <label class="span-2">
+            Avatar URL
+            <input name="avatarUrl" type="url" placeholder="https://..." />
+          </label>
+          <label class="span-2">
+            备注
+            <textarea name="notes" rows="3" placeholder="补充说明"></textarea>
+          </label>
+        </div>
+
+          <div class="modal-footer">
+            <p id="autofill-note" class="helper-text">自动填充会根据链接识别平台、账号，并生成可编辑的基础资料。</p>
+          <div class="footer-actions">
+            <button type="submit" value="cancel" class="ghost-button" formnovalidate>取消</button>
+            <button type="submit" value="save" class="primary-button">保存达人</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="brand-modal" class="modal">
+      <form method="dialog" class="modal-card" id="brand-form">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Add Brand</p>
+            <h3>新增竞品品牌</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit" formnovalidate>×</button>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            品牌名称
+            <input name="brandName" type="text" required />
+          </label>
+          <label>
+            归属国家
+            <input name="country" type="text" />
+          </label>
+          <label>
+            品类
+            <input name="category" type="text" placeholder="Bedding / Home decor / Dorm" />
+          </label>
+          <label>
+            价格带
+            <input name="priceBand" type="text" placeholder="$39-$79" />
+          </label>
+          <label class="span-2">
+            品牌介绍
+            <textarea name="brandIntro" rows="3"></textarea>
+          </label>
+          <label>
+            Amazon 网站
+            <input name="amazonUrl" type="url" />
+          </label>
+          <label>
+            官网
+            <input name="websiteUrl" type="url" />
+          </label>
+          <label>
+            母公司
+            <input name="parentCompany" type="text" />
+          </label>
+          <label>
+            发现来源
+            <input name="sourceNote" type="text" placeholder="TikTok / Instagram / Influencer name" />
+          </label>
+          <label class="span-2">
+            关联达人
+            <input name="relatedInfluencers" type="text" placeholder="@creator1, @creator2" />
+          </label>
+          <label class="span-2">
+            备注
+            <textarea name="notes" rows="3"></textarea>
+          </label>
+        </div>
+
+        <div class="modal-footer">
+          <div class="footer-actions">
+            <button type="submit" value="cancel" class="ghost-button" formnovalidate>取消</button>
+            <button type="submit" value="save" class="primary-button">保存品牌</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="delete-modal" class="modal">
+      <form method="dialog" class="modal-card compact" id="delete-form">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Soft Delete</p>
+            <h3>删除留痕</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit" formnovalidate>×</button>
+        </div>
+
+        <label>
+          删除原因
+          <textarea name="deletionReason" rows="4" placeholder="例如：风格不符 / 已重复 / 国家不匹配 / 联系无效"></textarea>
+        </label>
+
+        <div class="modal-footer">
+          <p class="helper-text">删除后不会彻底消失，会在“已删除”视图中以红色删除线保留。</p>
+          <div class="footer-actions">
+            <button type="submit" value="cancel" class="ghost-button" formnovalidate>取消</button>
+            <button type="submit" value="confirm" class="danger-button">确认删除</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="bulk-delete-modal" class="modal">
+      <form method="dialog" class="modal-card compact" id="bulk-delete-form">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Bulk Soft Delete</p>
+            <h3>批量删除留痕</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit" formnovalidate>×</button>
+        </div>
+
+        <label>
+          删除原因
+          <textarea name="deletionReason" rows="4" placeholder="例如：重复、风格不符、国家不匹配"></textarea>
+        </label>
+
+        <div class="modal-footer">
+          <p class="helper-text">会对当前勾选的达人统一写入删除原因，并保留红色删除线记录。</p>
+          <div class="footer-actions">
+            <button type="submit" value="cancel" class="ghost-button" formnovalidate>取消</button>
+            <button type="submit" value="confirm" class="danger-button">确认批量删除</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="timeline-modal" class="modal">
+      <form method="dialog" class="modal-card compact" id="timeline-form">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Timeline Entry</p>
+            <h3>新增时间线记录</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit" formnovalidate>×</button>
+        </div>
+
+        <label>
+          记录类型
+          <select name="actionType">
+            <option value="新增">新增达人</option>
+            <option value="自动回填">自动回填资料</option>
+            <option value="已联系">发出 DM / 邮件</option>
+            <option value="已回复">收到回复</option>
+            <option value="已报价">拿到报价</option>
+            <option value="寄样">寄样</option>
+            <option value="发布">发布内容</option>
+            <option value="删除">删除</option>
+            <option value="备注">自定义备注</option>
+          </select>
+        </label>
+
+        <label>
+          记录时间
+          <input name="actionDate" type="datetime-local" />
+        </label>
+
+        <label>
+          记录说明
+          <textarea name="actionNote" rows="4" placeholder="例如：2026 夏季合作第一封 DM 已发出"></textarea>
+        </label>
+
+        <div class="modal-footer">
+          <p class="helper-text">你可以自己指定这条时间线发生的时间，不会被强制写成当前时间。</p>
+          <div class="footer-actions">
+            <button type="submit" value="cancel" class="ghost-button" formnovalidate>取消</button>
+            <button type="submit" value="save" class="primary-button">保存记录</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./site-config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
