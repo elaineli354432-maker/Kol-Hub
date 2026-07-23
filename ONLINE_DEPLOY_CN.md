@@ -1,44 +1,98 @@
-# Brandream 在线部署
+# Brandream 在线部署说明
 
-当前项目已经改成可直接在浏览器里连接 Supabase。
+## 先说结论
 
-## 第一步：打开浏览器直连权限
+`http://127.0.0.1:4274/index.html` 这一类地址只是你当前电脑上的本地临时地址。
 
-在 Supabase SQL Editor 中执行：
+它有几个天然限制：
 
-- [deploy/supabase_browser_access.sql](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/deploy/supabase_browser_access.sql)
+- 只有这台电脑自己能访问
+- 本地服务一停，地址就失效
+- 电脑重启、窗口关闭、端口变化后，旧地址就可能打不开
 
-执行完成后，网页就可以用公开的 publishable key 直接读取和保存 `brandream-main` 这条共享数据。
+如果你要的是“每台电脑、每个手机都能打开同一个网址，并继续保存同一份进度”，正确路线是：
 
-## 第二步：确认本地网页已经读到云端数据
+- GitHub：放代码
+- Vercel：放网页和后端接口
+- Supabase：放真实业务数据
 
-重新打开本地网页后，应看到：
+## 当前项目现在的默认模式
 
-- 顶部状态为“云端共享”
-- 达人库里能看到之前导入的 40 个达人
-- 竞品品牌库里能看到 5 个品牌
+项目已经调整为更稳的默认方式：
 
-## 第三步：上传到静态托管
+- 前端默认走 `/api` 接口
+- 本地运行时：`server.py` 提供 `/api/data` 和 `/api/health`
+- 线上运行时：Vercel 提供同样的 `/api/data` 和 `/api/health`
+- Supabase 只在后端使用，不再默认让浏览器直接连数据库
 
-这套代码现在不再依赖本地 `/api` 才能工作，所以可以部署到：
+这意味着：
 
-- GitHub Pages
-- Netlify
-- Cloudflare Pages
+- 本地调试和线上正式版的行为会更一致
+- 不需要把数据库 publishable key 暴露给浏览器
+- 更适合达人资料、品牌资料这类需要长期保存的业务数据
 
-最省事的路线是 GitHub Pages：
+## 上线步骤
 
-1. 新建一个 GitHub 仓库
-2. 把当前整个项目推上去
-3. 在 GitHub 仓库设置里开启 Pages
-4. 选择 `main` 分支和根目录 `/`
-5. 等待生成公网地址
+1. 把当前项目代码上传到 GitHub
+2. 在 Supabase 中创建项目
+3. 在 Supabase SQL Editor 执行 [deploy/supabase.sql](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/deploy/supabase.sql)
+4. 在本地把 [.env.example](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/.env.example) 复制成 `.env.local`
+5. 填好：
+   - `SUPABASE_URL`
+   - `SUPABASE_SECRET_KEY`
+   - `SUPABASE_STATE_TABLE=app_state`
+   - `SUPABASE_STATE_KEY=brandream-main`
+6. 运行本地导入脚本，把已有 SQLite 数据导入 Supabase
+7. 在 Vercel 中导入 GitHub 仓库
+8. 在 Vercel 项目里配置同样的环境变量
+9. 部署完成后，用 Vercel 给出的公网网址访问
 
-以后所有电脑和手机都直接打开那个公网地址即可。
+## 本地已有数据如何带上去
 
-## 当前关键文件
+当前项目已经有导入脚本：
 
-- 浏览器直连配置：[site-config.js](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/site-config.js)
-- 页面入口：[index.html](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/index.html)
+- [scripts/import_local_state_to_supabase.py](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/scripts/import_local_state_to_supabase.py)
+
+推荐流程：
+
+```powershell
+Copy-Item .\.env.example .\.env.local
+python .\scripts\import_local_state_to_supabase.py --dry-run
+python .\scripts\import_local_state_to_supabase.py
+```
+
+本地数据来源通常是：
+
+- [work/app.db](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/work/app.db)
+- [work/generated_data.json](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/work/generated_data.json)
+
+## 上线后怎么验证
+
+部署完成后，建议这样验证：
+
+1. 打开 `https://你的域名/api/health`
+2. 确认返回里有：
+   - `storageMode: "cloud-supabase"`
+3. 再打开主页面
+4. 用两台不同设备分别新增或修改一条记录
+5. 刷新后确认两边看到的是同一份数据
+
+## 相关文件
+
+- 前端入口：[index.html](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/index.html)
 - 前端逻辑：[app.js](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/app.js)
-- Supabase 权限 SQL：[deploy/supabase_browser_access.sql](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/deploy/supabase_browser_access.sql)
+- 默认站点配置：[site-config.js](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/site-config.js)
+- 本地服务：[server.py](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/server.py)
+- Vercel 接口：[api/data.js](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/api/data.js)
+- 健康检查：[api/health.js](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/api/health.js)
+- Supabase SQL：[deploy/supabase.sql](/C:/Users/HUAWEI/Documents/Codex/2026-07-09/kol-kol-kol-tiktok-instagram-facebook/deploy/supabase.sql)
+
+## 不再推荐的方式
+
+现在不再推荐默认使用“浏览器直接连接 Supabase”的公开读写模式，因为它会让前端直接接触数据库访问凭据和共享数据入口。
+
+对于这个项目，更合适的长期方案是：
+
+- 浏览器只访问网页
+- 网页只请求 `/api`
+- `/api` 再由后端去读写 Supabase
